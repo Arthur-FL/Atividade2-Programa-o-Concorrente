@@ -199,13 +199,3 @@ A thread 3 produziu um log de level 4 com a seguinte mensagem: Error: falhas que
 A thread 3 produziu um log de level 1 com a seguinte mensagem: Debug: informações para investigação e solução de problemas.
 Produção de logs encerrada. Ocupação atual do buffer: 0
 ```
-
-**Verificação:** a saída completa tem 81 linhas (80 mensagens de log, 20 de cada produtor, mais a linha final de encerramento) e a execução leva cerca de 2,4 segundos. Nas execuções testadas, todas as mensagens foram consumidas, o programa terminou sem travar e o ThreadSanitizer não reportou nenhuma condição de corrida. Para conferir a quantidade de linhas:
-
-```bash
-./sistema-logging | wc -l    # deve imprimir 81
-```
-
-**O que os atrasos mostram:** com os valores atuais (`ATRASO_PROD_US = 100000` e `ATRASO_CONS_US = 30000`), os quatro produtores geram mensagens, em média, mais rápido do que o consumidor consegue gravá-las. O buffer de 10 posições enche, e os produtores passam a bloquear em `pushMessage`, esperando em `buffer_naocheio` até que o consumidor abra uma vaga. Em testes com um contador temporário no laço de espera, isso ocorreu dezenas de vezes por execução.
-
-**Experimentando outros valores:** os atrasos são constantes no início do código e podem ser alterados para observar o outro lado da coordenação. Reduzindo `ATRASO_CONS_US` para um valor pequeno (por exemplo, `5000`), o consumidor passa a ser mais rápido que os produtores, o buffer fica vazio com frequência e é o consumidor que bloqueia em `popMessage`, esperando em `buffer_naovazio`. Em ambos os casos o programa termina corretamente com as 80 mensagens consumidas.
